@@ -14,6 +14,9 @@ def process_csv(grades_path, questions_path, output_path):
     grades_df = pd.read_csv(grades_path)
     questions_df = pd.read_csv(questions_path, header=2)
     
+    # Remove the last row in grades_df (which contains the average)
+    grades_df = grades_df[:-1]
+    
     # Keep necessary columns
     questions_df = questions_df[["Q#", "Question name"]]
     questions_df.columns = questions_df.columns.str.strip()
