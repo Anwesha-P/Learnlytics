@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import os
+import re
 
 # Create directories if they do not exist
 UPLOAD_FOLDER = "uploads"
@@ -21,6 +22,9 @@ def process_csv(grades_path, questions_path, output_path):
     # Identify question response columns
     response_columns = [col for col in grades_df.columns if col.startswith("Q.")]    
     
+    # Extract total marks from column titles
+    total_marks = {col: float(re.search(r'/([0-9]+\.?[0-9]*)', col).group(1)) if re.search(r'/([0-9]+\.?[0-9]*)', col) else 1 for col in response_columns}
+    
     # Transform grades data
     responses_melted = grades_df.melt(
         id_vars=["Last name", "First name", "ID number", "Email address"],
@@ -39,21 +43,36 @@ def process_csv(grades_path, questions_path, output_path):
 
     slo_response_columns = [col for col in grades_df.columns if any(col.startswith(f"Q. {int(q)}") for q in slo_question_numbers)]
     
-    # Rename columns to "SLO #<number>"
-    slo_column_mapping = {col: f"SLO #{int(col.split()[1])}" for col in slo_response_columns}
+    # Rename columns based on SLO names from the questions file
+    slo_column_mapping = {col: re.search(r'SLO \d+', slo_questions_df.loc[slo_questions_df["Q#"] == int(col.split()[1]), "Question name"].values[0]).group(0) for col in slo_response_columns}
     
+    # Convert grades to percentages based on total marks
+    for col in slo_response_columns:
+        grades_df[col] = pd.to_numeric(grades_df[col], errors='coerce')
+        grades_df[col] = (grades_df[col] / total_marks[col]) * 100  # Convert to percentage
+        grades_df[col] = grades_df[col].apply(lambda x: f"{x:.2f}%" if pd.notna(x) else "")
+
     slo_grades_df = grades_df[["Last name", "First name", "ID number", "Email address"] + slo_response_columns].rename(columns=slo_column_mapping)
     slo_grades_df.to_csv(output_path, index=False)
 
 def main():
-    st.title("SLO Grades Processing")
+    st.title("Learlytics: Moodle Grades to SLO processing")
 
-    st.write("Upload the two CSV files (grades and questions) for processing.")
+    st.write("Upload the two CSV files (grades and questions) from Moodle for processing.")
+    
+    # Input fields for course, section, academic period
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        course = st.text_input("Course", placeholder="Eg: BUS 205")
+    with col2:
+        section = st.text_input("Section", placeholder="Eg: A")
+    with col3:
+        academic_period = st.text_input("Academic Period", placeholder="Eg: Spring 2025")
 
     # Upload CSV files
     file1 = st.file_uploader("Upload Grades CSV", type=["csv"])
     file2 = st.file_uploader("Upload Questions CSV", type=["csv"])
-
+    
     if file1 and file2:
         # Save files locally
         file1_path = os.path.join(UPLOAD_FOLDER, "grades.csv")
@@ -70,10 +89,13 @@ def main():
             process_csv(file1_path, file2_path, OUTPUT_FILE)
             st.success("Files processed successfully! Click below to download the result.")
             
-            # Provide download link for processed file
+            # Create output file name
+            output_file = f"{course.replace(' ', '_')}-{section.replace(' ', '_')}-{academic_period.replace(' ', '_')}.csv"
+            
+            # Open the generated file and provide the download button
             with open(OUTPUT_FILE, "rb") as f:
-                st.download_button("Download SLO Grades", f, file_name=OUTPUT_FILE)
-        
+                st.download_button("Download SLO Grades", f, file_name=output_file)
+
         except Exception as e:
             st.error(f"Error occurred: {e}")
 

@@ -1,0 +1,4 @@
+﻿"Last name","First name","ID number","Email address",State,"Started on",Completed,"Time taken",Grade/100.00,"Q. 1 /10.00","Q. 2 /15.00","Q. 3 /15.00","Q. 4 /30.00","Q. 5 /30.00"
+Gates,Allison,1918355,afg7@calvin.edu,Finished,"February 20 2025  10:29 AM","February 20 2025  10:29 AM","16 secs",40.00,10.00,0.00,0.00,15.00,15.00
+Nyachhyon,Reeja,10008444,rn33@calvin.edu,Finished,"February 20 2025  10:53 AM","February 20 2025  10:54 AM","54 secs",85.00,10.00,15.00,0.00,30.00,30.00
+"Overall average",,,,,,,,62.50,10.00,7.50,0.00,22.50,22.50
