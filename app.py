@@ -37,10 +37,12 @@ def process_csv(grades_path, questions_path, output_path):
     slo_questions_df = merged_df[merged_df["Question name"].str.contains("SLO", case=False, na=False)]
     slo_question_numbers = slo_questions_df["Q#"].unique()
 
-    slo_response_columns = [f"Q. {int(q)} /" for q in slo_question_numbers]
     slo_response_columns = [col for col in grades_df.columns if any(col.startswith(f"Q. {int(q)}") for q in slo_question_numbers)]
     
-    slo_grades_df = grades_df[["Last name", "First name", "ID number", "Email address"] + slo_response_columns]
+    # Rename columns to "SLO #<number>"
+    slo_column_mapping = {col: f"SLO #{int(col.split()[1])}" for col in slo_response_columns}
+    
+    slo_grades_df = grades_df[["Last name", "First name", "ID number", "Email address"] + slo_response_columns].rename(columns=slo_column_mapping)
     slo_grades_df.to_csv(output_path, index=False)
 
 def main():
