@@ -70,8 +70,8 @@ def main():
         academic_period = st.text_input("Academic Period", placeholder="Eg: Spring 2025")
 
     # Upload CSV files
-    file1 = st.file_uploader("Upload Grades CSV", type=["csv"])
-    file2 = st.file_uploader("Upload Questions CSV", type=["csv"])
+    file1 = st.file_uploader("Upload the CSV file from the 'Grades' report on Moodle", type=["csv"])
+    file2 = st.file_uploader("Upload the CSV file from the 'Questions Statistics' report on Moodle", type=["csv"])
     
     if file1 and file2:
         # Save files locally
