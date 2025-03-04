@@ -59,7 +59,7 @@ def process_csv(grades_path, questions_path, output_path):
     slo_grades_df.to_csv(output_path, index=False)
 
 def main():
-    st.title("Learlytics: Moodle Grades to SLO processing")
+    st.title("Learnalytics: Moodle Grades to SLO processing")
 
     st.write("Upload the two CSV files (grades and questions) from Moodle for processing.")
     
