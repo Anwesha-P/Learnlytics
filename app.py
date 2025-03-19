@@ -10,19 +10,23 @@ UPLOAD_FOLDER = "uploads"
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-def open_outlook_email(attachment_path, subject, recipient=""):
+def open_outlook_web_email(subject, recipient=""):
     try:
-        # Encode the subject and recipient in a mailto link
-        mailto_link = f"mailto:{recipient}?subject={urllib.parse.quote(subject)}"
+        # URL encode the subject and body for safety
+        subject_encoded = urllib.parse.quote(subject)
+        body = "Please find the attached file."
+        body_encoded = urllib.parse.quote(body)
         
-        # Open the mail client (default email app)
-        subprocess.run(["cmd", "/c", "start", mailto_link], shell=True)
+        # Create the mailto link for Outlook Web App
+        mailto_link = f"mailto:{recipient}?subject={subject_encoded}&body={body_encoded}"
 
-        st.success("Outlook email window opened. Please attach the file manually.")
+        # Open the default web browser with the mailto link
+        webbrowser.open(mailto_link)
+
+        st.success("Opening Outlook Web App with the pre-filled email.")
     
     except Exception as e:
-        st.error(f"Error opening Outlook: {e}")
-
+        st.error(f"Error opening Outlook Web: {e}")
 
 def process_csv(grades_path, questions_path, output_path):
     grades_df = pd.read_csv(grades_path)
@@ -163,13 +167,11 @@ def main():
             download_file = f"{course.replace(' ', '_')}-{section.replace(' ', '_')}-{academic_period.replace(' ', '_')}_combined.csv"
             with open(combined_output_path, "rb") as f:
                 st.download_button("Download Combined SLO Grades", f, file_name=download_file)
-            # **New Button to Open Outlook**
-            # Sample attachment path (Replace with the actual file path)
-            attachment_path = os.path.abspath(combined_output_path)
+            subject = "SLO Grades Report"
+            recipient = "recipient@example.com"
 
             if st.button("Send Email"):
-                open_outlook_email(attachment_path, "SLO Grades Report", "ap45@calvin.edu")
-
+                open_outlook_web_email(subject, recipient)
     else:
         st.warning("Please upload both grades and questions files to proceed.")
 
