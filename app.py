@@ -2,11 +2,57 @@ import streamlit as st
 import pandas as pd
 import os
 import re
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
 
 # Create directories if they do not exist
 UPLOAD_FOLDER = "uploads"
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
+
+# Email configuration (replace with your credentials)
+SMTP_SERVER = "smtp.gmail.com"  # Example: Gmail SMTP server
+SMTP_PORT = 587
+SENDER_EMAIL = "your_email@gmail.com"  # Replace with your email
+SENDER_PASSWORD = "your_password"  # Replace with your email password
+RECIPIENT_EMAIL = "ap45@calvin.edu"  # Recipient email
+
+def send_email(subject, body, attachment_path):
+    """
+    Send an email with an attachment.
+    """
+    try:
+        # Create the email
+        msg = MIMEMultipart()
+        msg["From"] = SENDER_EMAIL
+        msg["To"] = RECIPIENT_EMAIL
+        msg["Subject"] = subject
+
+        # Add body to the email
+        msg.attach(MIMEText(body, "plain"))
+
+        # Attach the file
+        with open(attachment_path, "rb") as attachment:
+            part = MIMEBase("application", "octet-stream")
+            part.set_payload(attachment.read())
+            encoders.encode_base64(part)
+            part.add_header(
+                "Content-Disposition",
+                f"attachment; filename={os.path.basename(attachment_path)}",
+            )
+            msg.attach(part)
+
+        # Connect to the SMTP server and send the email
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls()  # Secure the connection
+            server.login(SENDER_EMAIL, SENDER_PASSWORD)
+            server.sendmail(SENDER_EMAIL, RECIPIENT_EMAIL, msg.as_string())
+
+        st.success("Email sent successfully!")
+    except Exception as e:
+        st.error(f"Failed to send email: {e}")
 
 def process_csv(grades_path, questions_path, output_path):
     grades_df = pd.read_csv(grades_path)
@@ -137,16 +183,19 @@ def main():
             combined_slo_grades = pd.concat(all_slo_grades, ignore_index=True)
             
             # Merge rows for the same student
-            combined_slo_grades = combined_slo_grades.groupby(["Last name", "First name", "ID number", "Email address"], as_index=False).first()
+            combined_slo_grades = combined_slo_grades.groupby(
+                ["Last name", "First name", "ID number", "Email address"], as_index=False
+            ).agg(lambda x: x.dropna().iloc[0] if not x.dropna().empty else "")
             
             # Save the combined DataFrame to a new CSV file
             combined_output_path = os.path.join(UPLOAD_FOLDER, "combined_slo_grades.csv")
             combined_slo_grades.to_csv(combined_output_path, index=False)
             
-            # Provide a download button for the combined file
-            download_file = f"{course.replace(' ', '_')}-{section.replace(' ', '_')}-{academic_period.replace(' ', '_')}_combined.csv"
-            with open(combined_output_path, "rb") as f:
-                st.download_button("Download Combined SLO Grades", f, file_name=download_file)
+            # Send the email when the button is pressed
+            if st.button("Send Email"):
+                subject = f"SLO Grades for {course} {section} {academic_period}"
+                body = f"Please find attached the combined SLO grades for {course} {section} {academic_period}."
+                send_email(subject, body, combined_output_path)
 
     else:
         st.warning("Please upload both grades and questions files to proceed.")
