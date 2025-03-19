@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 import re
-import subprocess
+import webbrowser
 import urllib.parse
 
 # Create directories if they do not exist
