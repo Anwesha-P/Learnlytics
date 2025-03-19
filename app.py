@@ -2,11 +2,35 @@ import streamlit as st
 import pandas as pd
 import os
 import re
+import win32com.client
 
 # Create directories if they do not exist
 UPLOAD_FOLDER = "uploads"
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
+
+
+def open_outlook_email(attachment_path, subject, recipient=""):
+    try:
+        outlook = win32com.client.Dispatch("Outlook.Application")
+        mail = outlook.CreateItem(0)  # Create a new email
+
+        # Set email details
+        mail.Subject = subject
+        mail.Body = "Hello,\n\nPlease find the attached SLO grades file.\n\nBest regards."
+        
+        if recipient:
+            mail.To = recipient  # Set recipient if provided
+        
+        # Attach file
+        mail.Attachments.Add(attachment_path)
+
+        # Open the email window
+        mail.Display()
+        st.success("Outlook email window opened successfully!")
+
+    except Exception as e:
+        st.error(f"Error opening Outlook: {e}")
 
 def process_csv(grades_path, questions_path, output_path):
     grades_df = pd.read_csv(grades_path)
@@ -147,6 +171,9 @@ def main():
             download_file = f"{course.replace(' ', '_')}-{section.replace(' ', '_')}-{academic_period.replace(' ', '_')}_combined.csv"
             with open(combined_output_path, "rb") as f:
                 st.download_button("Download Combined SLO Grades", f, file_name=download_file)
+            # **New Button to Open Outlook**
+            if st.button("Send via Outlook"):
+                open_outlook_email(combined_output_path, f"SLO Grades Report - {course} {section} {academic_period}")
 
     else:
         st.warning("Please upload both grades and questions files to proceed.")
