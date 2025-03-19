@@ -18,11 +18,14 @@ def open_outlook_web_email(subject, recipient=""):
         body_encoded = urllib.parse.quote(body)
         
         # Create the mailto link for Outlook Web App
-        mailto_link = f"mailto:{recipient}?subject={subject_encoded}&body={body_encoded}"
+        # mailto_link = f"mailto:{recipient}?subject={subject_encoded}&body={body_encoded}"
 
         # Open the default web browser with the mailto link
-        webbrowser.open(mailto_link)
-
+        # webbrowser.open(mailto_link)
+        outlook_url = "https://outlook.office.com/mail/0/compose"
+        
+        # Open this URL in the default browser
+        webbrowser.open(outlook_url)
         st.success("Opening Outlook Web App with the pre-filled email.")
     
     except Exception as e:
