@@ -10,17 +10,6 @@ UPLOAD_FOLDER = "uploads"
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-def generate_mailto_link(subject, recipient=""):
-    # URL encode the subject and body for special characters
-    subject_encoded = urllib.parse.quote(subject)
-    body = "Please find the attached file."
-    body_encoded = urllib.parse.quote(body)
-    
-    # Create the mailto link
-    mailto_link = f"mailto:{recipient}?subject={subject_encoded}&body={body_encoded}"
-    
-    return mailto_link
-
 def process_csv(grades_path, questions_path, output_path):
     grades_df = pd.read_csv(grades_path)
     questions_df = pd.read_csv(questions_path, header=2)
@@ -160,16 +149,6 @@ def main():
             download_file = f"{course.replace(' ', '_')}-{section.replace(' ', '_')}-{academic_period.replace(' ', '_')}_combined.csv"
             with open(combined_output_path, "rb") as f:
                 st.download_button("Download Combined SLO Grades", f, file_name=download_file)
-            subject = "SLO Grades Report"
-            recipient = "recipient@example.com"
-
-            # Generate the mailto link
-            mailto_link = generate_mailto_link(subject, recipient)
-
-            # Display the clickable mailto link in Streamlit
-            st.markdown(f"[Click here to open your email client](mailto:{mailto_link})")
-
-            st.write("When you click the link above, it will open your email client with the subject pre-filled.")
     else:
         st.warning("Please upload both grades and questions files to proceed.")
 
