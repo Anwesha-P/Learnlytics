@@ -5,8 +5,6 @@ import re
 
 # Create directories if they do not exist
 UPLOAD_FOLDER = "uploads"
-OUTPUT_FILE = "slo_grades.csv"
-
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
@@ -14,8 +12,9 @@ def process_csv(grades_path, questions_path, output_path):
     grades_df = pd.read_csv(grades_path)
     questions_df = pd.read_csv(questions_path, header=2)
     
-    # Remove the last row in grades_df (which contains the average)
-    grades_df = grades_df[:-1]
+    # Remove the last row in grades_df only if it contains "Overall Average" in the "Last name" column
+    if grades_df.iloc[-1]["Last name"] == "Overall average":
+        grades_df = grades_df[:-1]
     
     # Keep necessary columns
     questions_df = questions_df[["Q#", "Question name"]]
@@ -59,9 +58,9 @@ def process_csv(grades_path, questions_path, output_path):
     slo_grades_df.to_csv(output_path, index=False)
 
 def main():
-    st.title("Learnalytics: Moodle Grades to SLO processing")
+    st.title("Learnalytics: Moodle Grades to SLO Processing")
 
-    st.write("Upload the two CSV files (grades and questions) from Moodle for processing.")
+    st.write("Upload the CSV files (grades and questions) from Moodle. Files with matching names will be paired automatically.")
     
     # Input fields for course, section, academic period
     col1, col2, col3 = st.columns(3)
@@ -73,34 +72,79 @@ def main():
         academic_period = st.text_input("Academic Period", placeholder="Eg: Spring 2025")
 
     # Upload CSV files
-    file1 = st.file_uploader("Upload the CSV file from the 'Grades' report on Moodle", type=["csv"])
-    file2 = st.file_uploader("Upload the CSV file from the 'Questions Statistics' report on Moodle", type=["csv"])
+    st.subheader("Upload Grades Files")
+    grade_files = st.file_uploader("Upload the CSV files from the 'Grades' report on Moodle", type=["csv"], accept_multiple_files=True, key="grades")
     
-    if file1 and file2:
-        # Save files locally
-        file1_path = os.path.join(UPLOAD_FOLDER, "grades.csv")
-        file2_path = os.path.join(UPLOAD_FOLDER, "questions.csv")
-
-        with open(file1_path, "wb") as f:
-            f.write(file1.getbuffer())
+    st.subheader("Upload Questions Files")
+    question_files = st.file_uploader("Upload the CSV files from the 'Questions Statistics' report on Moodle", type=["csv"], accept_multiple_files=True, key="questions")
+    
+    if grade_files and question_files:
+        # Group files by their common identifier
+        file_pairs = {}
         
-        with open(file2_path, "wb") as f:
-            f.write(file2.getbuffer())
+        # Process grades files
+        for file in grade_files:
+            file_name = file.name
+            if "-grades.csv" in file_name:
+                common_id = file_name.replace("-grades.csv", "")
+                file_pairs[common_id] = {"grades": file, "questionstats": None}
+        
+        # Process questions files
+        for file in question_files:
+            file_name = file.name
+            if "-questionstats.csv" in file_name:
+                common_id = file_name.replace("-questionstats.csv", "")
+                if common_id not in file_pairs:
+                    file_pairs[common_id] = {"grades": None, "questionstats": file}
+                else:
+                    file_pairs[common_id]["questionstats"] = file
 
-        try:
-            # Process the uploaded files
-            process_csv(file1_path, file2_path, OUTPUT_FILE)
-            st.success("Files processed successfully! Click below to download the result.")
+        all_slo_grades = []  # To store processed DataFrames
+        
+        # Process each pair of files
+        for common_id, files in file_pairs.items():
+            grades_file = files["grades"]
+            questionstats_file = files["questionstats"]
             
-            # Create output file name
-            output_file = f"{course.replace(' ', '_')}-{section.replace(' ', '_')}-{academic_period.replace(' ', '_')}.csv"
-            
-            # Open the generated file and provide the download button
-            with open(OUTPUT_FILE, "rb") as f:
-                st.download_button("Download SLO Grades", f, file_name=output_file)
+            if grades_file and questionstats_file:
+                # Save files locally
+                grades_file_path = os.path.join(UPLOAD_FOLDER, f"{common_id}-grades.csv")
+                questionstats_file_path = os.path.join(UPLOAD_FOLDER, f"{common_id}-questionstats.csv")
+                output_file = os.path.join(UPLOAD_FOLDER, f"{common_id}-slo_grades.csv")
 
-        except Exception as e:
-            st.error(f"Error occurred: {e}")
+                with open(grades_file_path, "wb") as f:
+                    f.write(grades_file.getbuffer())
+                
+                with open(questionstats_file_path, "wb") as f:
+                    f.write(questionstats_file.getbuffer())
+
+                try:
+                    # Process the uploaded files
+                    process_csv(grades_file_path, questionstats_file_path, output_file)
+                    st.success(f"Files for {common_id} processed successfully!")
+                    
+                    # Append the processed DataFrame to the list
+                    slo_grades_df = pd.read_csv(output_file)
+                    all_slo_grades.append(slo_grades_df)
+                    
+                except Exception as e:
+                    st.error(f"Error occurred with files for {common_id}: {e}")
+            else:
+                st.warning(f"Skipping {common_id}: Missing grades or questionstats file.")
+
+        if all_slo_grades:
+            # Combine all processed DataFrames into one
+            combined_slo_grades = pd.concat(all_slo_grades, ignore_index=True)
+            combined_output_path = os.path.join(UPLOAD_FOLDER, "combined_slo_grades.csv")
+            combined_slo_grades.to_csv(combined_output_path, index=False)
+            
+            # Provide a download button for the combined file
+            download_file = f"{course.replace(' ', '_')}-{section.replace(' ', '_')}-{academic_period.replace(' ', '_')}_combined.csv"
+            with open(combined_output_path, "rb") as f:
+                st.download_button("Download Combined SLO Grades", f, file_name=download_file)
+
+    else:
+        st.warning("Please upload both grades and questions files to proceed.")
 
 if __name__ == "__main__":
     main()
