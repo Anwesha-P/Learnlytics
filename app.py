@@ -16,9 +16,9 @@ if not os.path.exists(UPLOAD_FOLDER):
 # Email configuration (replace with your credentials)
 SMTP_SERVER = "smtp.gmail.com"  # Example: Gmail SMTP server
 SMTP_PORT = 587
-SENDER_EMAIL = "your_email@gmail.com"  # Replace with your email
-SENDER_PASSWORD = "your_password"  # Replace with your email password
-RECIPIENT_EMAIL = "ap45@calvin.edu"  # Recipient email
+SENDER_EMAIL = "ap45@calvin.edu"  # Replace with your email
+SENDER_PASSWORD = "Keshari_Maa@Turtle18"  # Replace with your email password
+RECIPIENT_EMAIL = "pradhananga.anwesha@gmail.com"  # Recipient email
 
 def send_email(subject, body, attachment_path):
     """
