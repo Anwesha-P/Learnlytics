@@ -14,8 +14,8 @@ if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
 # Email configuration (replace with your credentials)
-SMTP_SERVER = "smtp.gmail.com"  # Example: Gmail SMTP server
-SMTP_PORT = 587
+SMTP_SERVER = "smtp.calvin.edu"  # Example: Gmail SMTP server
+SMTP_PORT = 25
 SENDER_EMAIL = "ap45@calvin.edu"  # Replace with your email
 SENDER_PASSWORD = "Keshari_Maa@Turtle18"  # Replace with your email password
 RECIPIENT_EMAIL = "pradhananga.anwesha@gmail.com"  # Recipient email
