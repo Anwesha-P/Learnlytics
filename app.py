@@ -4,6 +4,7 @@ import os
 import re
 import smtplib
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText  # Import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 
@@ -31,7 +32,7 @@ def send_email(subject, body, attachment_path):
         msg["Subject"] = subject
 
         # Add body to the email
-        msg.attach(MIMEText(body, "plain"))
+        msg.attach(MIMEText(body, "plain"))  # Use MIMEText for the email body
 
         # Attach the file
         with open(attachment_path, "rb") as attachment:
