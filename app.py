@@ -10,26 +10,16 @@ UPLOAD_FOLDER = "uploads"
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-def open_outlook_web_email(subject, recipient=""):
-    try:
-        # URL encode the subject and body for safety
-        subject_encoded = urllib.parse.quote(subject)
-        body = "Please find the attached file."
-        body_encoded = urllib.parse.quote(body)
-        
-        # Create the mailto link for Outlook Web App
-        # mailto_link = f"mailto:{recipient}?subject={subject_encoded}&body={body_encoded}"
-
-        # Open the default web browser with the mailto link
-        # webbrowser.open(mailto_link)
-        outlook_url = "https://outlook.office.com/mail/0/compose"
-        
-        # Open this URL in the default browser
-        webbrowser.open(outlook_url)
-        st.success("Opening Outlook Web App with the pre-filled email.")
+def generate_mailto_link(subject, recipient=""):
+    # URL encode the subject and body for special characters
+    subject_encoded = urllib.parse.quote(subject)
+    body = "Please find the attached file."
+    body_encoded = urllib.parse.quote(body)
     
-    except Exception as e:
-        st.error(f"Error opening Outlook Web: {e}")
+    # Create the mailto link
+    mailto_link = f"mailto:{recipient}?subject={subject_encoded}&body={body_encoded}"
+    
+    return mailto_link
 
 def process_csv(grades_path, questions_path, output_path):
     grades_df = pd.read_csv(grades_path)
@@ -173,8 +163,13 @@ def main():
             subject = "SLO Grades Report"
             recipient = "recipient@example.com"
 
-            if st.button("Send Email"):
-                open_outlook_web_email(subject, recipient)
+            # Generate the mailto link
+            mailto_link = generate_mailto_link(subject, recipient)
+
+            # Display the clickable mailto link in Streamlit
+            st.markdown(f"[Click here to open your email client](mailto:{mailto_link})")
+
+            st.write("When you click the link above, it will open your email client with the subject pre-filled.")
     else:
         st.warning("Please upload both grades and questions files to proceed.")
 
