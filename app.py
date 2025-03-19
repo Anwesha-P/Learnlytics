@@ -135,6 +135,11 @@ def main():
         if all_slo_grades:
             # Combine all processed DataFrames into one
             combined_slo_grades = pd.concat(all_slo_grades, ignore_index=True)
+            
+            # Merge rows for the same student
+            combined_slo_grades = combined_slo_grades.groupby(["Last name", "First name", "ID number", "Email address"], as_index=False).first()
+            
+            # Save the combined DataFrame to a new CSV file
             combined_output_path = os.path.join(UPLOAD_FOLDER, "combined_slo_grades.csv")
             combined_slo_grades.to_csv(combined_output_path, index=False)
             
